@@ -1,0 +1,23 @@
+[
+  {
+    "email_Receiver": "example@domain.com",
+    "email_Sender": "example2@domain.com",
+    "senderARN": "[arn:aws:ses:exampleKey]",
+    "region": "us-west-2",
+    "email_Subject": "Hello World",
+    "accessKeyId": "[AWS Access Key Id]",
+    "secretAccessKey": "[AWS Secret Access Key]"
+  },
+  {
+    "secret": "[secret generated key by Crypto]"
+  },
+  {
+    "AWS_SES_ARN": "[arn:aws:kms:exampleKey]"
+  },
+  {
+    "ENV": {
+      "server": "example.com",
+      "port": 3000
+    }
+  }
+]

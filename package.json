@@ -1,0 +1,24 @@
+{
+  "name": "emailservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.6.6",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "fs": "0.0.2",
+    "http": "0.0.0",
+    "https": "^1.0.0",
+    "jwt-async": "^1.1.2",
+    "mongo": "^0.1.0",
+    "mongodb": "^2.2.11",
+    "mongoose": "^4.6.3",
+    "path": "^0.12.7"
+  }
+}
