@@ -16,13 +16,7 @@ module.exports.setConfig = function(c) {
 module.exports.sendNotification = function() {
 
     const env = config[3].ENV;
-    AWS.config.update(
-      {
-        accessKeyId: config[0].accessKeyId,
-        secretAccessKey: config[0].secretAccessKey,
-        region: config[0].region
-      }
-    );
+    AWS.config.update({region: config[0].region});
     let ses = new AWS.SES();
 
       var params = {
@@ -36,13 +30,13 @@ module.exports.sendNotification = function() {
       Message: { /* required */
         Body: { /* required */
           Html: {
-            Data: '<p> You have a new encrypted message. Please follow this link to view: '
-            + '<a href="http://' + env.server + env.port '/#/admin">jettdental.com/#/admin</a></p>',
+            Data: '<p> You have a new encrypted inquiry from a paitent. Please follow this link to view: '
+            + '<a href="https://' + env.server + env.port + '/#/admin">jettdental.com/#/admin</a></p>',
             Charset: 'UTF-8'
           },
           Text: {
             Data: 'You have a new encrypted inquiry from a paitent. Please copy and paiste the following'
-            + ' link into your web browser to view: ' + 'http://' + env.server + env.port '/#/admin',
+            + ' link into your web browser to view:' + 'https://' + env.server + env.port + '/#/admin',
             Charset: 'UTF-8'
           }
         },
@@ -64,29 +58,45 @@ module.exports.sendNotification = function() {
 
 };
 
-// need to implement garbage collection
 var activeClients = [];
 
 module.exports.authenticate = function(token) {
-  if (!token) {
-    return false;
-  } else {
-    for (var i = 0; i < activeClients.length; i++) {
-      if (activeClients[i].token === token) {
-        return true;
+  let authPromise = new Promise(function(resolve,reject) {
+    if (!token) {
+      reject('no token');
+    } else {
+      for (var i = 0; i < activeClients.length; i++) {
+        if (activeClients[i].token === token) {
+          resolve('found client');
+        }
       }
+      reject('not logged in');
     }
-    return false;
-  }
+  });
+
+  return authPromise;
 };
 
 module.exports.storeToken = function(jwt) {
-  let dt = new Date().getTime();
-  var client = {
-    token: jwt,
-    loginTime: dt
-  };
-  activeClients.push(client);
+
+    let tokenPromise = new Promise(function(resolve,reject) {
+    let dt = new Date().getTime();
+    var client = {
+      token: jwt,
+      loginTime: dt
+    };
+
+    activeClients.push(client);
+
+    if (activeClients.indexOf(client) != -1) {
+      resolve('token stored');
+    } else {
+      reject('token not stored');
+    }
+  });
+
+  return tokenPromise;
+
 };
 
 module.exports.removeClient = function(jwt) {
@@ -96,5 +106,4 @@ module.exports.removeClient = function(jwt) {
       return true;
     }
   }
-  console.log(activeClients);
 };

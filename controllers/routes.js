@@ -12,9 +12,7 @@ module.exports = function(app, config) {
   const businessLayer = require('./business.js');
 
   app.get('/api', function (req, res) {
-    res.json({
-      server: config[3].ENV.server
-    });
+    res.json({server: 'https jett api'});
   });
 
   app.post('/api/mail', function(req, res) {
@@ -45,8 +43,7 @@ module.exports = function(app, config) {
   app.post('/api/delete-message', function(req, res) {
     let id = req.body.id;
     let token = req.headers.authorization;
-    let validate = businessLayer.authenticate(token);
-    if (validate) {
+    businessLayer.authenticate(token).then(function(data) {
       Message.findById(id, function(err,message) {
         if (message) {
           console.log(message);
@@ -56,15 +53,22 @@ module.exports = function(app, config) {
           res.status(404).send(false);
         }
       });
-    } else {
+    }, function(err) {
       res.status(401).send(false);
-    }
+    });
   });
 
   app.get('/api/all-messages', function(req,res) {
     var token = req.headers.authorization;
-    let validation = businessLayer.authenticate(token);
-    if (validation) {
+    let validation = new Promise(function(resolve,reject) {
+      businessLayer.authenticate(token).then(function(data) {
+        resolve(true);
+      }, function(err) {
+        reject(err);
+      });
+    });
+
+    validation.then(function(data) {
       Message.find({}, function(err,messages) {
         if (err) {
           console.log(err);
@@ -79,24 +83,24 @@ module.exports = function(app, config) {
           res.send(messages);
         }
       });
-    } else {
+    }, function(err) {
+      console.log(err);
       res.send(false);
-    }
+    });
   });
 
 
   app.post('/api/get-message', function(req,res) {
     var decipher = crypto.createDecipher('aes192', secret);
     let token = req.headers.authorization;
-    let validate = businessLayer.authenticate(token);
-    if (validate) {
+    businessLayer.authenticate(token).then(function(data) {
       let id = req.body.messageID;
-        Message.findById(id, function(err,data) {
+        Message.findById(id, function(err,message) {
 
           if (err) console.log(err);
-          // console.log(data);
+
           try {
-            let encryptedData = data.encryptedData;
+            let encryptedData = message.encryptedData;
             let dec = decipher.update(encryptedData, 'base64', 'utf8')
             dec += decipher.final('utf8');
             res.send(dec);
@@ -104,9 +108,9 @@ module.exports = function(app, config) {
             console.log(e);
           }
         });
-    } else {
+    }, function(err) {
       res.send(false);
-    }
+    });
   });
 
   app.post('/api/login', function(req,res) {
@@ -114,9 +118,8 @@ module.exports = function(app, config) {
     var cipher = crypto.createCipher('aes192', secret);
     var cryptedPW = cipher.update(credentials.password, 'utf8', 'hex');
     cryptedPW += cipher.final('hex');
-
-    let eml = credentials.email.toLowerCase();
-    Admin.findOne({email: eml}).exec(function(err,user) {
+    console.log('hit login route');
+    Admin.findOne({email: credentials.email.toLowerCase()}).exec(function(err,user) {
       if (user != null) {
         if (user.password != cryptedPW) {
           res.send(false);
@@ -127,8 +130,19 @@ module.exports = function(app, config) {
               console.log(err);
                res.send(false);
             }
-            businessLayer.storeToken(token);
-            res.send(token);
+            let storeIt = new Promise(function(resolve,reject) {
+              businessLayer.storeToken(token).then(function(data) {
+                resolve('added');
+              }, function(err) {
+                console.log(err);
+                reject(err);
+              });
+            });
+            storeIt.then(function(data) {
+              res.send(token);
+            }, function(err) {
+              console.log(err);
+            });
           });
 
         }
@@ -152,9 +166,7 @@ module.exports = function(app, config) {
 
     let newPassword = req.body.newPassword;
     let token = req.headers.authorization;
-    let validate = businessLayer.authenticate(token);
-
-    if (validate) {
+    businessLayer.authenticate(token).then(function(result) {
       jwt.verify(token, function(err,data) {
         let emailAddress = data.claims.email;
         Admin.findOne({email: emailAddress}, function(err,admin) {
@@ -176,9 +188,13 @@ module.exports = function(app, config) {
           });
         });
       });
-    } else {
+    }, function(err) {
       res.send(false);
-    }
+    });
+  });
+
+  app.get('update-admin', function(req,res) {
+      res.redirect('/#/login');
   });
 
   app.post('/api/update-message', function(req,res) {
