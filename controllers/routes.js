@@ -12,7 +12,7 @@ module.exports = function(app, config) {
   const businessLayer = require('./business.js');
 
   app.get('/api', function (req, res) {
-    res.json({server: 'https jett api'});
+    res.json({server: 'https rest api'});
   });
 
   app.post('/api/mail', function(req, res) {

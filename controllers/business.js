@@ -60,6 +60,16 @@ module.exports.sendNotification = function() {
 
 var activeClients = [];
 
+// garbage collection - every 24 hours check for tokens over 24 hours old to remove
+setInterval(function() {
+  var now = new Date().getTime();
+  for (var i = 0; i < activeClients.length; i++) {
+    if (activeClients[i].loginTime < (now - 86400000)) {
+      activeClients.splice(i,1);
+    }
+  }
+}, 86400000);
+
 module.exports.authenticate = function(token) {
   let authPromise = new Promise(function(resolve,reject) {
     if (!token) {
